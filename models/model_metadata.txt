@@ -1,0 +1,22 @@
+============================================================
+MODEL TRAINING SUMMARY
+============================================================
+
+Best Model: Logistic Regression
+
+EVALUATION METRICS:
+------------------------------------------------------------
+
+Logistic Regression:
+  Accuracy:  0.8034
+  Precision: 0.6520
+  Recall:    0.5561
+  F1-Score:  0.6003
+  ROC-AUC:   0.8427
+
+Random Forest:
+  Accuracy:  0.7644
+  Precision: 0.5407
+  Recall:    0.7460
+  F1-Score:  0.6270
+  ROC-AUC:   0.8409
