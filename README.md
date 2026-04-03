@@ -34,6 +34,110 @@ REST API (FastAPI with 8 endpoints)
 Real-time Predictions (single customer + batch processing)
 ```
 
+### System Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         CUSTOMER CHURN PREDICTION SYSTEM                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                              ┌──────────────────┐
+                              │   Raw Data       │
+                              │  (7,043 records) │
+                              │  (21 features)   │
+                              └────────┬─────────┘
+                                       │
+                                       ▼
+                    ┌──────────────────────────────────┐
+                    │   Data Preprocessing Module      │
+                    │  • Handle missing values         │
+                    │  • Remove duplicates             │
+                    │  • Standardize formats           │
+                    └────────────┬─────────────────────┘
+                                 │
+                                 ▼
+                    ┌──────────────────────────────────┐
+                    │  Feature Engineering Pipeline    │
+                    │  • Encode categorical vars       │
+                    │  • Scale numerical features      │
+                    │  • Create 30 processed features  │
+                    └────────────┬─────────────────────┘
+                                 │
+                  ┌──────────────┴──────────────┐
+                  │ (Train 80% / Test 20%)      │
+                  ▼                             ▼
+        ┌──────────────────┐        ┌──────────────────┐
+        │ Training Data    │        │  Test Data       │
+        │ (5,634 samples)  │        │ (1,409 samples)  │
+        └────────┬─────────┘        └────────┬─────────┘
+                 │                           │
+   ┌─────────────┴──────────────────────────┴─────────────────┐
+   │                                                           │
+   ▼                                   ▼                       ▼
+┌─────────────┐            ┌──────────────────┐    ┌─────────────────┐
+│ Logistic    │            │  Random Forest   │    │ Gradient Boost  │
+│ Regression  │            │  (79.2% acc)     │    │ (77.8% acc)     │
+│ (80.34% ✓)  │            └──────────────────┘    └─────────────────┘
+└──────┬──────┘
+       │ SELECTED
+       │ (Best Performance + Interpretability)
+       ▼
+┌──────────────────────────────────────┐
+│  Model Artifacts                     │
+│  • best_model.pkl (1.7 KB)          │
+│  • Feature weights (coefficients)    │
+│  • Performance metrics               │
+└──────────────────┬───────────────────┘
+                   │
+                   ▼
+      ┌────────────────────────────┐
+      │   FastAPI REST Server      │
+      │   (8 Endpoints)            │
+      ├────────────────────────────┤
+      │ GET  /health               │
+      │ GET  /model-info           │
+      │ GET  /features             │
+      │ GET  /feature-importance   │
+      │ GET  /example-input        │
+      │ POST /predict              │
+      │ POST /predict-batch        │
+      │ GET  / (root)              │
+      └─────────────┬──────────────┘
+                    │
+        ┌───────────┴─────────────┐
+        │                         │
+        ▼                         ▼
+   ┌─────────────┐          ┌──────────────┐
+   │   Browser   │          │  API Client  │
+   │ (Swagger UI)│          │  (Python)    │
+   │ :8000/docs │          │  (cURL)      │
+   └─────────────┘          └──────────────┘
+        │                         │
+        └───────────┬─────────────┘
+                    ▼
+            ┌───────────────────┐
+            │ Real-time         │
+            │ Predictions       │
+            │ • Churn prob      │
+            │ • Risk level      │
+            │ • Risk factors    │
+            └───────────────────┘
+```
+
+### Pipeline Flow
+
+```
+Customer Data Input
+       │
+       ├─→ [Preprocessing] → Normalize & Scale
+       │
+       ├─→ [Feature Engineering] → One-Hot Encoding
+       │
+       ├─→ [Model Inference] → Logistic Regression
+       │
+       └─→ [Output] → Churn Probability + Risk Level
+```
+
 ## Project Structure
 
 ```
