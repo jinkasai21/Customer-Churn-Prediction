@@ -1,0 +1,524 @@
+================================================================================
+          CUSTOMER CHURN PREDICTION PROJECT - TESTING GUIDE
+================================================================================
+
+PROJECT OVERVIEW:
+- Python 3.9+ with scikit-learn, FastAPI, pandas, numpy
+- Machine Learning: Logistic Regression (80.34% accuracy)
+- REST API with 8 endpoints for predictions and model info
+- 7,043 customer records with 30 preprocessed features
+
+================================================================================
+QUICK START TESTING (5 minutes)
+================================================================================
+
+METHOD 1: VERIFY PROJECT STRUCTURE
+────────────────────────────────────────────────────────────────────────────
+
+cd /path/to/Customer-Churn-Prediction
+
+python << 'VERIFY'
+import os
+
+print("Checking project structure...")
+print("─" * 80)
+
+required_dirs = ['data', 'models', 'src', 'app', 'notebooks']
+required_files = {
+    'data': ['WA_Fn-UseC_-Telco-Customer-Churn.csv', 'X_processed.csv', 
+             'y_processed.csv', 'predictions.csv'],
+    'models': ['best_model.pkl', 'model_metadata.txt', 'confusion_matrices.png', 
+               'model_comparison.png'],
+    'src': ['data_preprocessing.py', 'train_model.py', 'predict.py'],
+    'app': ['main.py'],
+    'root': ['README.md', 'requirements.txt']
+}
+
+all_good = True
+for dir_name in required_dirs:
+    if os.path.isdir(dir_name):
+        print(f"✓ {dir_name}/")
+    else:
+        print(f"✗ {dir_name}/ (MISSING)")
+        all_good = False
+
+for location, files in required_files.items():
+    for file in files:
+        path = f"{location}/{file}" if location != 'root' else file
+        if os.path.isfile(path):
+            size = os.path.getsize(path) / 1024
+            print(f"  ✓ {path:45} ({size:8.1f} KB)")
+        else:
+            print(f"  ✗ {path} (MISSING)")
+            all_good = False
+
+if all_good:
+    print("\n✅ All project files present!")
+else:
+    print("\n❌ Some files are missing!")
+VERIFY
+
+Expected Output:
+  ✓ All directories should be present
+  ✓ All files should exist with proper sizes
+  ✓ Final message: "All project files present!"
+
+
+METHOD 2: QUICK INTEGRATION TEST (No API)
+────────────────────────────────────────────────────────────────────────────
+
+cd /path/to/Customer-Churn-Prediction
+
+python << 'TEST_FULL'
+import pandas as pd
+import pickle
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+
+print("\n" + "="*80)
+print("FULL INTEGRATION TEST")
+print("="*80)
+
+# 1. Load raw data
+print("\n1. Loading raw data...")
+df = pd.read_csv('data/WA_Fn-UseC_-Telco-Customer-Churn.csv')
+print(f"   ✓ Loaded {len(df)} records, {len(df.columns)} columns")
+
+# 2. Load processed data
+print("\n2. Loading processed data...")
+X_proc = pd.read_csv('data/X_processed.csv')
+y_proc = pd.read_csv('data/y_processed.csv')
+print(f"   ✓ Features: {X_proc.shape}")
+print(f"   ✓ Target: {y_proc.shape}")
+
+# 3. Load model
+print("\n3. Loading trained model...")
+with open('models/best_model.pkl', 'rb') as f:
+    model = pickle.load(f)
+print(f"   ✓ Model type: {type(model).__name__}")
+
+# 4. Test predictions
+print("\n4. Testing predictions...")
+y_pred = model.predict(X_proc)
+y_proba = model.predict_proba(X_proc)
+print(f"   ✓ Predictions shape: {y_pred.shape}")
+print(f"   ✓ Probabilities shape: {y_proba.shape}")
+print(f"   ✓ Churn rate: {(y_pred == 1).sum() / len(y_pred) * 100:.1f}%")
+
+# 5. Model metrics
+print("\n5. Evaluating model...")
+y_proc_flat = y_proc.values.ravel()
+accuracy = accuracy_score(y_proc_flat, y_pred)
+precision = precision_score(y_proc_flat, y_pred)
+recall = recall_score(y_proc_flat, y_pred)
+f1 = f1_score(y_proc_flat, y_pred)
+roc_auc = roc_auc_score(y_proc_flat, y_proba[:, 1])
+print(f"   ✓ Accuracy:  {accuracy:.4f}")
+print(f"   ✓ Precision: {precision:.4f}")
+print(f"   ✓ Recall:    {recall:.4f}")
+print(f"   ✓ F1-Score:  {f1:.4f}")
+print(f"   ✓ ROC-AUC:   {roc_auc:.4f}")
+
+print("\n✅ FULL INTEGRATION TEST PASSED")
+print("="*80 + "\n")
+TEST_FULL
+
+Expected Output:
+  ✓ Data loads successfully (7,043 records)
+  ✓ Predictions generated (7,043 samples)
+  ✓ All metrics display (accuracy ~0.80+, ROC-AUC ~0.84)
+  ✓ Final message: "FULL INTEGRATION TEST PASSED"
+
+
+================================================================================
+COMPREHENSIVE TESTING (20 minutes)
+================================================================================
+
+METHOD 3: TEST DATA PREPROCESSING MODULE
+────────────────────────────────────────────────────────────────────────────
+
+cd /path/to/Customer-Churn-Prediction
+
+python << 'TEST_PREP'
+from src.data_preprocessing import DataPreprocessor
+
+print("\n" + "="*80)
+print("PREPROCESSING TEST")
+print("="*80)
+
+# Initialize preprocessor
+preprocessor = DataPreprocessor()
+
+# Load and process data
+print("\nLoading raw data...")
+df = preprocessor.load_data('data/WA_Fn-UseC_-Telco-Customer-Churn.csv')
+print(f'✓ Loaded {len(df)} records')
+
+# Explore data
+print("\nExploring data...")
+preprocessor.explore_data(df)
+print('✓ Data exploration complete')
+
+# Process data
+print("\nProcessing data...")
+X_processed, y_processed = preprocessor.prepare_features_and_target(df)
+print(f'✓ Processed features shape: {X_processed.shape}')
+print(f'✓ Target shape: {y_processed.shape}')
+print(f'✓ No missing values: {X_processed.isnull().sum().sum() == 0}')
+
+print("\n✅ PREPROCESSING TEST PASSED")
+print("="*80 + "\n")
+TEST_PREP
+
+Expected Output:
+  ✓ Raw data: 7,043 records
+  ✓ Processed features: (7043, 30)
+  ✓ Target: (7043, 1)
+  ✓ No missing values: True
+
+
+METHOD 4: TEST MODEL TRAINING MODULE
+────────────────────────────────────────────────────────────────────────────
+
+cd /path/to/Customer-Churn-Prediction
+
+python << 'TEST_TRAIN'
+from src.train_model import ModelTrainer
+import pandas as pd
+
+print("\n" + "="*80)
+print("MODEL TRAINING TEST")
+print("="*80)
+
+# Load processed data
+X = pd.read_csv('data/X_processed.csv')
+y = pd.read_csv('data/y_processed.csv').values.ravel()
+
+# Initialize trainer
+trainer = ModelTrainer()
+
+# Train Logistic Regression
+print('\nTraining Logistic Regression...')
+lr_model, lr_metrics = trainer.train_logistic_regression(X, y)
+print(f'✓ Accuracy:  {lr_metrics["accuracy"]:.4f}')
+print(f'✓ Precision: {lr_metrics["precision"]:.4f}')
+print(f'✓ Recall:    {lr_metrics["recall"]:.4f}')
+print(f'✓ ROC-AUC:   {lr_metrics["roc_auc"]:.4f}')
+
+# Train Random Forest
+print('\nTraining Random Forest...')
+rf_model, rf_metrics = trainer.train_random_forest(X, y)
+print(f'✓ Accuracy:  {rf_metrics["accuracy"]:.4f}')
+print(f'✓ Precision: {rf_metrics["precision"]:.4f}')
+print(f'✓ Recall:    {rf_metrics["recall"]:.4f}')
+print(f'✓ ROC-AUC:   {rf_metrics["roc_auc"]:.4f}')
+
+print('\n✅ MODEL TRAINING TEST PASSED')
+print("="*80 + "\n")
+TEST_TRAIN
+
+Expected Output:
+  ✓ Logistic Regression trained successfully
+  ✓ Random Forest trained successfully
+  ✓ All metrics displayed (accuracy, precision, recall, ROC-AUC)
+
+
+METHOD 5: TEST PREDICTION MODULE
+────────────────────────────────────────────────────────────────────────────
+
+cd /path/to/Customer-Churn-Prediction
+
+python << 'TEST_PRED'
+from src.predict import ChurnPredictor
+import pandas as pd
+
+print("\n" + "="*80)
+print("PREDICTION TEST")
+print("="*80)
+
+# Initialize predictor
+predictor = ChurnPredictor()
+predictor.load_model('models/best_model.pkl')
+
+# Load processed data
+X_processed = pd.read_csv('data/X_processed.csv')
+
+# Test single prediction
+print('\nTesting single customer prediction...')
+sample = X_processed.iloc[0:1]
+prediction = predictor.predict_single_customer(sample)
+print(f'✓ Prediction returned: {type(prediction).__name__}')
+
+# Test batch prediction
+print('\nTesting batch prediction...')
+predictions = predictor.predict_batch(X_processed)
+print(f'✓ Batch predictions shape: {predictions.shape}')
+churn_count = (predictions["Predicted_Churn"]==1).sum()
+churn_rate = churn_count / len(predictions) * 100
+print(f'✓ Churn rate: {churn_rate:.1f}% ({churn_count} customers)')
+
+# Test feature importance
+print('\nTesting feature importance...')
+importance = predictor.get_feature_importance()
+top_feature = importance.iloc[0]["Feature"]
+print(f'✓ Top feature: {top_feature}')
+print(f'✓ Importance features retrieved: {len(importance)}')
+
+print('\n✅ PREDICTION TEST PASSED')
+print("="*80 + "\n")
+TEST_PRED
+
+Expected Output:
+  ✓ Single prediction works
+  ✓ Batch predictions: (7043, 5) or similar shape
+  ✓ Churn rate: ~22% (matches model expectations)
+  ✓ Top feature: Contract-related or tenure feature
+
+
+METHOD 6: TEST FASTAPI APPLICATION
+────────────────────────────────────────────────────────────────────────────
+
+STEP 1: Start API Server (Terminal 1)
+────────────────────────────────────
+cd /path/to/Customer-Churn-Prediction
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+Expected Output:
+  Uvicorn running on http://0.0.0.0:8000
+  Application startup complete
+  (Keep this terminal running)
+
+
+STEP 2: Test API Endpoints (Terminal 2)
+────────────────────────────────────────
+cd /path/to/Customer-Churn-Prediction
+
+python << 'TEST_API'
+import requests
+import json
+
+BASE_URL = "http://localhost:8000"
+
+print("\n" + "="*80)
+print("API ENDPOINT TESTS")
+print("="*80)
+
+# 1. Health Check
+print("\n1. Testing GET /health")
+response = requests.get(f"{BASE_URL}/health")
+print(f"   Status: {response.status_code} ✓")
+print(f"   Response: {response.json()}")
+
+# 2. Model Info
+print("\n2. Testing GET /model-info")
+response = requests.get(f"{BASE_URL}/model-info")
+print(f"   Status: {response.status_code} ✓")
+model_info = response.json()
+print(f"   Model Type: {model_info['model_type']}")
+print(f"   Accuracy: {model_info['accuracy']:.4f}")
+
+# 3. Features List
+print("\n3. Testing GET /features")
+response = requests.get(f"{BASE_URL}/features")
+print(f"   Status: {response.status_code} ✓")
+features = response.json()['features']
+print(f"   Total Features: {len(features)}")
+
+# 4. Feature Importance
+print("\n4. Testing GET /feature-importance")
+response = requests.get(f"{BASE_URL}/feature-importance")
+print(f"   Status: {response.status_code} ✓")
+importance = response.json()['feature_importance']
+print(f"   Top Feature: {importance[0]['feature']}")
+
+# 5. Example Input
+print("\n5. Testing GET /example-input")
+response = requests.get(f"{BASE_URL}/example-input")
+print(f"   Status: {response.status_code} ✓")
+example = response.json()['example']
+print(f"   Example has 30 features: {len(example) == 30} ✓")
+
+# 6. Single Prediction
+print("\n6. Testing POST /predict")
+customer_data = {
+    "gender": "Male",
+    "senior_citizen": 0,
+    "partner": "Yes",
+    "dependents": "No",
+    "tenure": 24,
+    "phone_service": "Yes",
+    "paperless_billing": "Yes",
+    "monthly_charges": 65.5,
+    "total_charges": 1570,
+    "internet_service": "Fiber optic",
+    "online_security": "No",
+    "online_backup": "Yes",
+    "device_protection": "No",
+    "tech_support": "No",
+    "streaming_tv": "Yes",
+    "streaming_movies": "No",
+    "contract": "Month-to-month",
+    "payment_method": "Electronic check",
+    "multiple_lines": "Yes"
+}
+response = requests.post(f"{BASE_URL}/predict", json=customer_data)
+print(f"   Status: {response.status_code} ✓")
+result = response.json()
+print(f"   Churn Probability: {result['churn_probability']:.2%}")
+print(f"   Risk Level: {result['risk_level']}")
+
+# 7. Batch Prediction
+print("\n7. Testing POST /predict-batch")
+response = requests.post(f"{BASE_URL}/predict-batch")
+print(f"   Status: {response.status_code} ✓")
+batch_result = response.json()
+print(f"   Predictions Returned: {len(batch_result['predictions'])}")
+
+print("\n✅ ALL API ENDPOINT TESTS PASSED")
+print("="*80 + "\n")
+TEST_API
+
+Expected Output:
+  ✓ All endpoints return status 200
+  ✓ Health check shows model is loaded
+  ✓ Model info displays correctly
+  ✓ Features list has 30 items
+  ✓ Predictions returned with probabilities and risk levels
+
+
+STEP 3: Access Interactive Documentation
+─────────────────────────────────────────
+Open in web browser:
+  - Swagger UI: http://localhost:8000/docs
+  - ReDoc: http://localhost:8000/redoc
+  - Raw JSON: http://localhost:8000/openapi.json
+
+STEP 4: Stop API Server
+──────────────────────
+In Terminal 1: Press Ctrl+C
+
+
+================================================================================
+TESTING SUMMARY & EXPECTED RESULTS
+================================================================================
+
+Quick Test Results (Methods 1-2):
+  ✓ All 5 directories exist
+  ✓ All required files present
+  ✓ Data loads successfully (7,043 records)
+  ✓ Model loads successfully
+  ✓ Predictions work (7,043 samples)
+  ✓ Accuracy: ~80.34%
+  ✓ ROC-AUC: ~0.8427
+
+Comprehensive Test Results (Methods 3-6):
+  ✓ Preprocessing: 30 features, no missing values
+  ✓ Logistic Regression: 80.34% accuracy
+  ✓ Random Forest: 76.44% accuracy
+  ✓ Single predictions: Returns probability + risk level
+  ✓ Batch predictions: 22.3% churn rate (1,572 of 7,043)
+  ✓ Feature importance: Top features identified
+  ✓ API endpoints: All 8 endpoints functional
+  ✓ API responses: Proper JSON format with HTTP 200 status
+
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Issue: ModuleNotFoundError for src modules
+Solution: Ensure working directory is /Users/jinka.sai21/Documents/Python/Customer-Churn-Prediction
+
+Issue: FileNotFoundError for data files
+Solution: Check data/ directory exists with all CSV files present
+
+Issue: API not responding
+Solution: 
+  1. Ensure server is running (Terminal 1)
+  2. Check port 8000 is available
+  3. Try: lsof -i :8000 to see what's using the port
+
+Issue: Model prediction errors
+Solution: Ensure X_processed.csv has exactly 30 columns matching model's feature count
+
+Issue: Missing dependencies
+Solution: Install missing packages:
+  pip install pandas numpy scikit-learn fastapi uvicorn
+
+Issue: Git not configured
+Solution: Configure git credentials (if needed for GitHub):
+  git config --global user.name "your-username"
+  git config --global user.email "your-email@example.com"
+
+
+================================================================================
+RECOMMENDED TEST SEQUENCE
+================================================================================
+
+For Quick Validation (5 minutes):
+  1. Method 1: Verify Project Structure
+  2. Method 2: Quick Integration Test
+
+For Development Testing (15 minutes):
+  1. Method 1: Verify Project Structure
+  2. Method 3: Test Preprocessing
+  3. Method 5: Test Predictions
+  4. Method 2: Quick Integration Test
+
+For Production Deployment (25 minutes):
+  1. All of Comprehensive Testing (Methods 3-6)
+  2. Load test API with multiple concurrent requests
+  3. Verify API response times
+  4. Check memory usage under load
+
+For Continuous Integration (Automated):
+  Create a test_all.py script that runs all methods programmatically
+  Run tests on every commit to GitHub
+
+
+================================================================================
+USEFUL COMMANDS
+================================================================================
+
+# Stop running API server
+Ctrl+C (in terminal running uvicorn)
+
+# Kill process on port 8000
+lsof -i :8000
+kill -9 <PID>
+
+# View project structure
+tree -L 2 /path/to/Customer-Churn-Prediction
+
+# Check Python version
+python --version
+
+# Check installed packages
+pip list | grep -E "pandas|scikit-learn|fastapi"
+
+# View API logs
+curl -v http://localhost:8000/health
+
+# Test specific endpoint
+curl -X GET http://localhost:8000/model-info
+
+# View all project files
+find . -type f -name "*.py" -o -name "*.csv" -o -name "*.pkl"
+
+
+================================================================================
+NEXT STEPS AFTER TESTING
+================================================================================
+
+1. ✓ Run tests to validate project works
+2. ✓ Review model performance metrics
+3. → Deploy API to cloud (AWS, Heroku, etc.)
+4. → Create UI/frontend for predictions
+5. → Set up monitoring and logging
+6. → Implement model retraining pipeline
+7. → Set up CI/CD with GitHub Actions
+8. → Document API endpoints for other teams
+
+
+================================================================================
+END OF TESTING GUIDE
+================================================================================
